@@ -1,160 +1,155 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>V-Umbrellashop</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #1e1f23;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    h1 {
-      margin-top: 20px;
-      color: #7289da;
-    }
-    .balance {
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
-    .shop-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      padding: 20px;
-    }
-    .item {
-      background: #2c2f33;
-      border: 2px solid #7289da;
-      border-radius: 15px;
-      width: 260px;
-      padding: 15px;
-      transition: transform 0.2s;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-    .item:hover { transform: scale(1.05); }
-    .item img {
-      width: 100%;
-      border-radius: 10px;
-    }
-    .item h2 {
-      margin: 10px 0;
-    }
-    .item p {
-      font-size: 14px;
-      color: #ccc;
-      text-align: left;
-    }
-    button {
-      padding: 10px 20px;
-      background: #7289da;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:disabled {
-      background: #99aab5;
-      cursor: not-allowed;
-    }
-    footer {
-      margin-top: 40px;
-      color: #99aab5;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>V-Umbrella Shop</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #1e1f23;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+h1 { margin-top: 20px; color: #7289da; }
+.balance { font-size: 18px; margin-bottom: 20px; display: none; }
+.shop-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+.item {
+  background: #2c2f33;
+  border: 2px solid #7289da;
+  border-radius: 15px;
+  width: 260px;
+  padding: 15px;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+.item:hover { transform: scale(1.05); }
+.item img { width: 100%; border-radius: 10px; }
+.item h2 { margin: 10px 0; }
+.item p { font-size: 14px; color: #ccc; text-align: left; }
+button {
+  padding: 10px 20px;
+  background: #7289da;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+button:disabled { background: #99aab5; cursor: not-allowed; }
+#login-container { margin: 30px 0; }
+footer { margin-top: 40px; color: #99aab5; font-size: 14px; }
+</style>
 </head>
 <body>
 
-<h1>🛒 V-Umbrellashop</h1>
-<p class="balance">💰 Solde <strong>V-Umbrella</strong> : <span id="coins">0</span> coins</p>
+<h1>🛒 V-Umbrella Shop</h1>
+
+<div id="login-container">
+  <a href="https://discord.com/oauth2/authorize?client_id=1410311740339785748&response_type=code&redirect_uri=https%3A%2F%2Fvangaming_yt.github.io%2FV-Umbrellashop%2Fshop.html&scope=identify">
+    <button>Se connecter avec Discord</button>
+  </a>
+</div>
+
+<p class="balance" id="balance">
+  💰 Solde <strong><span id="username"></span></strong> : <span id="coins">0</span> coins
+</p>
 
 <div class="shop-container" id="shop"></div>
 
 <script>
-const userId = prompt("Entrez votre ID Discord pour accéder au shop V-Umbrella :");
+const shopContainer = document.getElementById('shop');
+const balanceEl = document.getElementById('balance');
+const usernameEl = document.getElementById('username');
+const coinsEl = document.getElementById('coins');
+const loginContainer = document.getElementById('login-container');
 
-// Items du shop avec images et descriptions
+let userId = null;
+
+// Items du shop (images + descriptions)
 const items = [
-  {
-    name: "Kit Épique",
-    price: 100,
-    content: "Ptera castré + Armure Épique + Arme Épique (Hache, Pioche, Faucille)",
-    img: "https://i.imgur.com/ZdKJx1A.png"
-  },
-  {
-    name: "Kit Farme",
-    price: 100,
-    content: "Argentavis + Ankylosaure + Doedicurus (castrés)",
-    img: "https://i.imgur.com/5lJZr5f.png"
-  },
-  {
-    name: "Kit Mythic VIP",
-    price: 700,
-    content: "500 points de niveau + Ptera + Hache, Pioche, Arbalète",
-    img: "https://i.imgur.com/yhXmW1L.png"
-  },
-  {
-    name: "Ressources",
-    price: 600,
-    content: "5k de chaque ressource",
-    img: "https://i.imgur.com/nk7Up9f.png"
-  }
+  { name: "Kit Épique", price: 100, content: "Ptera castré + Armure Épique + Arme Épique", img: "https://i.imgur.com/ZdKJx1A.png" },
+  { name: "Kit Farme", price: 100, content: "Argentavis + Ankylosaure + Doedicurus (castrés)", img: "https://i.imgur.com/5lJZr5f.png" },
+  { name: "Kit Mythic VIP", price: 700, content: "500 points de niveau + Ptera + Hache, Pioche, Arbalète", img: "https://i.imgur.com/yhXmW1L.png" },
+  { name: "Ressources", price: 600, content: "5k de chaque ressource", img: "https://i.imgur.com/nk7Up9f.png" }
 ];
 
-const shopContainer = document.getElementById('shop');
-
 // Affichage des items
-items.forEach(item => {
-  const div = document.createElement('div');
-  div.className = 'item';
-  div.innerHTML = `
-    <img src="${item.img}" alt="${item.name}">
-    <h2>${item.name}</h2>
-    <p>Prix : ${item.price} coins</p>
-    <p>${item.content}</p>
-    <button onclick="buyItem('${item.name}', ${item.price})">Acheter</button>
-  `;
-  shopContainer.appendChild(div);
-});
-
-// Récupérer le solde
-async function updateBalance() {
-  try {
-    const res = await fetch(`http://localhost:3000/balance/${userId}`);
-    const data = await res.json();
-    document.getElementById('coins').innerText = data.coins;
-  } catch (err) {
-    console.error("Erreur API :", err);
-  }
+function displayShop() {
+  shopContainer.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <img src="${item.img}" alt="${item.name}">
+      <h2>${item.name}</h2>
+      <p>Prix : ${item.price} coins</p>
+      <p>${item.content}</p>
+      <button onclick="buyItem('${item.name}', ${item.price})">Acheter</button>
+    `;
+    shopContainer.appendChild(div);
+  });
 }
 
-// Acheter un item
+// Acheter un item via backend
 async function buyItem(name, price) {
+  if (!userId) return alert("❌ Connectez-vous d'abord !");
   try {
-    const res = await fetch("http://localhost:3000/buy", {
+    const res = await fetch("https://ton-backend.com/buy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, price, item: name })
     });
     const data = await res.json();
-
     if (data.error) return alert("❌ " + data.error);
-
-    document.getElementById('coins').innerText = data.newBalance;
+    coinsEl.innerText = data.newBalance;
     alert(`✅ Tu as acheté ${data.item} !`);
   } catch (err) {
     console.error("Erreur API :", err);
   }
 }
 
-// Mettre à jour le solde au chargement
-updateBalance();
+// Mettre à jour le solde depuis backend
+async function updateBalance() {
+  if (!userId) return;
+  try {
+    const res = await fetch(`https://ton-backend.com/balance/${userId}`);
+    const data = await res.json();
+    coinsEl.innerText = data.coins;
+    usernameEl.innerText = data.username;
+    balanceEl.style.display = 'block';
+    loginContainer.style.display = 'none';
+  } catch (err) {
+    console.error("Erreur API :", err);
+  }
+}
+
+// Vérification du code Discord dans callback
+const params = new URLSearchParams(window.location.search);
+const code = params.get('code');
+if (code) {
+  fetch("https://ton-backend.com/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code })
+  })
+  .then(res => res.json())
+  .then(data => {
+    userId = data.id; // ID Discord du joueur
+    updateBalance();
+  })
+  .catch(err => console.error(err));
+}
+
+// Affichage du shop
+displayShop();
 </script>
 
 <footer>
