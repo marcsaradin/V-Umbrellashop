@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>V-Umbrellashop</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1f23;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 {
+      margin-top: 20px;
+      color: #7289da;
+    }
+    .balance {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .shop-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .item {
+      background: #2c2f33;
+      border: 2px solid #7289da;
+      border-radius: 15px;
+      width: 260px;
+      padding: 15px;
+      transition: transform 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .item:hover { transform: scale(1.05); }
+    .item img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .item h2 {
+      margin: 10px 0;
+    }
+    .item p {
+      font-size: 14px;
+      color: #ccc;
+      text-align: left;
+    }
+    button {
+      padding: 10px 20px;
+      background: #7289da;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background: #99aab5;
+      cursor: not-allowed;
+    }
+    footer {
+      margin-top: 40px;
+      color: #99aab5;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🛒 V-Umbrellashop</h1>
+<p class="balance">💰 Solde <strong>V-Umbrella</strong> : <span id="coins">0</span> coins</p>
+
+<div class="shop-container" id="shop"></div>
+
+<script>
+const userId = prompt("Entrez votre ID Discord pour accéder au shop V-Umbrella :");
+
+// Items du shop avec images et descriptions
+const items = [
+  {
+    name: "Kit Épique",
+    price: 100,
+    content: "Ptera castré + Armure Épique + Arme Épique (Hache, Pioche, Faucille)",
+    img: "https://i.imgur.com/ZdKJx1A.png"
+  },
+  {
+    name: "Kit Farme",
+    price: 100,
+    content: "Argentavis + Ankylosaure + Doedicurus (castrés)",
+    img: "https://i.imgur.com/5lJZr5f.png"
+  },
+  {
+    name: "Kit Mythic VIP",
+    price: 700,
+    content: "500 points de niveau + Ptera + Hache, Pioche, Arbalète",
+    img: "https://i.imgur.com/yhXmW1L.png"
+  },
+  {
+    name: "Ressources",
+    price: 600,
+    content: "5k de chaque ressource",
+    img: "https://i.imgur.com/nk7Up9f.png"
+  }
+];
+
+const shopContainer = document.getElementById('shop');
+
+// Affichage des items
+items.forEach(item => {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = `
+    <img src="${item.img}" alt="${item.name}">
+    <h2>${item.name}</h2>
+    <p>Prix : ${item.price} coins</p>
+    <p>${item.content}</p>
+    <button onclick="buyItem('${item.name}', ${item.price})">Acheter</button>
+  `;
+  shopContainer.appendChild(div);
+});
+
+// Récupérer le solde
+async function updateBalance() {
+  try {
+    const res = await fetch(`http://localhost:3000/balance/${userId}`);
+    const data = await res.json();
+    document.getElementById('coins').innerText = data.coins;
+  } catch (err) {
+    console.error("Erreur API :", err);
+  }
+}
+
+// Acheter un item
+async function buyItem(name, price) {
+  try {
+    const res = await fetch("http://localhost:3000/buy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, price, item: name })
+    });
+    const data = await res.json();
+
+    if (data.error) return alert("❌ " + data.error);
+
+    document.getElementById('coins').innerText = data.newBalance;
+    alert(`✅ Tu as acheté ${data.item} !`);
+  } catch (err) {
+    console.error("Erreur API :", err);
+  }
+}
+
+// Mettre à jour le solde au chargement
+updateBalance();
+</script>
+
+<footer>
+  Shop officiel du bot <strong>V-Umbrella</strong>
+</footer>
+
+</body>
+</html>
