@@ -11,22 +11,22 @@ const client = new Client({
     ]
 });
 
-// Collection pour les commandes
 client.commands = new Collection();
 
-// Chargement des commandes depuis le dossier commands
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
-    client.commands.set(command.data.name, command);
+
+    // ✅ Utilisation du fallback si data est undefined
+    const commandName = command.data?.name || file.replace('.js', '');
+    client.commands.set(commandName, command);
 }
 
-// Event ready
 client.once('ready', () => {
     console.log(`Connecté en tant que ${client.user.tag}`);
 });
 
-// Event message pour les commandes prefixées
 client.on('messageCreate', async message => {
     if (!message.content.startsWith(process.env.PREFIX) || message.author.bot) return;
 
