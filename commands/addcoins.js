@@ -1,16 +1,25 @@
 const fs = require('fs');
+const COINS_FILE = './coins.json'; // Nouveau fichier pour le shop
 
 module.exports = {
     data: { name: 'addcoins', description: 'Ajouter des coins (admin)' },
     async execute(message, args) {
-        if (!args[0] || isNaN(args[0])) return message.reply("Usage: !addcoins <montant>");
-        const players = JSON.parse(fs.readFileSync('players.json'));
+        // Vérification du montant
+        if (!args[0] || isNaN(args[0])) 
+            return message.reply("Usage: !addcoins <montant>");
+
+        // Lire le fichier coins.json ou créer vide
+        let coins = {};
+        if (fs.existsSync(COINS_FILE)) {
+            coins = JSON.parse(fs.readFileSync(COINS_FILE));
+        }
+
         const userId = message.author.id;
 
-        if (!players[userId]) players[userId] = { coins: 0, xp: 0, level: 1, inventory: [], lastDaily: null };
+        if (!coins[userId]) coins[userId] = 0;
 
-        players[userId].coins += parseInt(args[0]);
-        fs.writeFileSync('players.json', JSON.stringify(players, null, 2));
+        coins[userId] += parseInt(args[0]);
+        fs.writeFileSync(COINS_FILE, JSON.stringify(coins, null, 2));
 
         message.reply(`✅ Tu as ajouté ${args[0]} coins à ton compte !`);
     }
