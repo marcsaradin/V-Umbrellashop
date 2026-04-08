@@ -1,18 +1,35 @@
+const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 
-module.exports = {
-    data: { name: 'leaderboard', description: 'Voir le classement' },
-    async execute(message, args) {
-        const players = JSON.parse(fs.readFileSync('players.json'));
-        const sorted = Object.entries(players)
-            .sort((a,b) => b[1].coins - a[1].coins)
-            .slice(0,10);
+const FILE = './players.json';
 
-        let lb = '🏆 Classement des coins:\n';
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('leaderboard')
+        .setDescription('Voir le classement des ambres'),
+
+    async execute(interaction) {
+        let players = {};
+
+        if (fs.existsSync(FILE)) {
+            players = JSON.parse(fs.readFileSync(FILE));
+        }
+
+        // Trier par ambres
+        const sorted = Object.entries(players)
+            .sort((a, b) => b[1].ambre - a[1].ambre)
+            .slice(0, 10);
+
+        let lb = '🏆 Classement des ambres:\n\n';
+
         sorted.forEach(([id, data], i) => {
-            lb += `${i+1}. <@${id}> - ${data.coins} coins | Niveau ${data.level}\n`;
+            lb += `${i + 1}. <@${id}> - ${data.ambre} ambres\n`;
         });
 
-        message.reply(lb);
+        if (sorted.length === 0) {
+            lb = "❌ Aucun joueur dans le classement.";
+        }
+
+        await interaction.reply(lb);
     }
 };

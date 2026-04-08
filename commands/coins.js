@@ -5,8 +5,8 @@ const FILE = './players.json';
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('inventory')
-        .setDescription('Voir ton inventaire'),
+        .setName('coins')
+        .setDescription('Voir ton nombre d’ambres'),
 
     async execute(interaction) {
         const userId = interaction.user.id;
@@ -16,16 +16,10 @@ module.exports = {
             players = JSON.parse(fs.readFileSync(FILE));
         }
 
-        // Créer joueur si pas existant
         if (!players[userId]) {
             players[userId] = { ambre: 0, inventory: [] };
-            fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
         }
 
-        const inv = players[userId].inventory;
-
-        await interaction.reply(
-            `🎒 Ton inventaire : ${inv.length ? inv.join(', ') : 'vide'}`
-        );
+        await interaction.reply(`💰 Tu as ${players[userId].ambre} ambres`);
     }
 };

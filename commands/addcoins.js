@@ -1,26 +1,39 @@
+const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
-const COINS_FILE = './coins.json'; // Nouveau fichier pour le shop
+
+const FILE = './players.json';
 
 module.exports = {
-    data: { name: 'addcoins', description: 'Ajouter des coins (admin)' },
-    async execute(message, args) {
-        // Vérification du montant
-        if (!args[0] || isNaN(args[0])) 
-            return message.reply("Usage: !addcoins <montant>");
+    data: new SlashCommandBuilder()
+        .setName('addcoins')
+        .setDescription('Ajouter des ambres')
+        .addIntegerOption(option =>
+            option.setName('montant')
+                .setDescription('Nombre d\'ambres à ajouter')
+                .setRequired(true)
+        ),
 
-        // Lire le fichier coins.json ou créer vide
-        let coins = {};
-        if (fs.existsSync(COINS_FILE)) {
-            coins = JSON.parse(fs.readFileSync(COINS_FILE));
+    async execute(interaction) {
+        const userId = interaction.user.id;
+        const montant = interaction.options.getInteger('montant');
+
+        // Charger players.json
+        let players = {};
+        if (fs.existsSync(FILE)) {
+            players = JSON.parse(fs.readFileSync(FILE));
         }
 
-        const userId = message.author.id;
+        // Créer joueur si pas existant
+        if (!players[userId]) {
+            players[userId] = { ambre: 0, inventory: [] };
+        }
 
-        if (!coins[userId]) coins[userId] = 0;
+        // Ajouter ambres
+        players[userId].ambre += montant;
 
-        coins[userId] += parseInt(args[0]);
-        fs.writeFileSync(COINS_FILE, JSON.stringify(coins, null, 2));
+        // Sauvegarder
+        fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
 
-        message.reply(`✅ Tu as ajouté ${args[0]} coins à ton compte !`);
+        await interaction.reply(`✅ Tu as ajouté ${montant} ambres !`);
     }
 };
