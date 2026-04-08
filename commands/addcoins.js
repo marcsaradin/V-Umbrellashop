@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 
 const FILE = './players.json';
@@ -6,7 +6,7 @@ const FILE = './players.json';
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Ajouter des ambres')
+        .setDescription('Ajouter des ambres à ton compte (admin seulement)')
         .addIntegerOption(option =>
             option.setName('montant')
                 .setDescription('Nombre d\'ambres à ajouter')
@@ -14,6 +14,11 @@ module.exports = {
         ),
 
     async execute(interaction) {
+        // Vérifier que l'utilisateur est admin
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return interaction.reply({ content: '❌ Tu n\'as pas la permission !', ephemeral: true });
+        }
+
         const userId = interaction.user.id;
         const montant = interaction.options.getInteger('montant');
 
@@ -34,6 +39,6 @@ module.exports = {
         // Sauvegarder
         fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
 
-        await interaction.reply(`✅ Tu as ajouté ${montant} ambres !`);
+        await interaction.reply(`✅ Tu as ajouté ${montant} ambres à ton compte !`);
     }
 };
