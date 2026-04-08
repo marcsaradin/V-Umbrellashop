@@ -84,9 +84,13 @@ app.post('/buy', (req, res) => {
     savePlayers();
 
     // 🔔 NOTIF DISCORD
-    const channel = client.channels.cache.get('ID_DU_CHANNEL'); // ⚠️ MET TON ID ICI
+    const channelId = process.env.SHOP_CHANNEL_ID; // ⚡ Salon défini dans .env
+    const channel = client.channels.cache.get(channelId);
+
     if (channel) {
         channel.send(`🛒 <@${userId}> a acheté **${item}** pour ${price} ambres !`);
+    } else {
+        console.log(`⚠️ Impossible de trouver le salon avec l'ID ${channelId}`);
     }
 
     res.json({
