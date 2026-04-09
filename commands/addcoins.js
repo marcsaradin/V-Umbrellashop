@@ -2,7 +2,6 @@ const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-// 🔥 chemin ABSOLU (IMPORTANT RAILWAY FIX)
 const FILE = path.join(__dirname, '../users.json');
 
 function loadDB() {
@@ -17,34 +16,39 @@ function saveDB(data) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Give des ambres à un membre')
+        .setDescription('Donner des ambres à un membre')
         .addUserOption(option =>
-            option.setName('user')
+            option
+                .setName('user')
                 .setDescription('Utilisateur')
                 .setRequired(true)
         )
         .addIntegerOption(option =>
-            option.setName('amount')
+            option
+                .setName('amount')
                 .setDescription('Montant')
                 .setRequired(true)
         ),
 
     async execute(interaction) {
 
-        console.log("🔥 addcoins utilisé");
+        const target = interaction.options.getUser('user');
+        const amount = interaction.options.getInteger('amount');
 
-        // 🔐 permission check
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        // 🔥 FIX CRASH
+        if (!target) {
             return interaction.reply({
-                content: "❌ Tu n'as pas la permission",
+                content: "❌ Aucun utilisateur sélectionné",
                 ephemeral: true
             });
         }
 
-        const target = interaction.options.getUser('user');
-        const amount = interaction.options.getInteger('amount');
-
-        console.log("➡ target:", target.id, "amount:", amount);
+        if (!amount || amount <= 0) {
+            return interaction.reply({
+                content: "❌ Montant invalide",
+                ephemeral: true
+            });
+        }
 
         let users = loadDB();
 
@@ -56,10 +60,10 @@ module.exports = {
 
         saveDB(users);
 
-        console.log("💾 DB updated");
+        console.log(`💰 addcoins: ${target.id} +${amount}`);
 
         return interaction.reply(
-            `✅ +${amount} ambres donnés à <@${target.id}>`
+            `✅ ${amount} ambres ajoutés à <@${target.id}>`
         );
     }
 };
