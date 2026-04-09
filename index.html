@@ -13,6 +13,7 @@ body {
   padding: 0;
   text-align: center;
 }
+
 h1 { margin-top: 20px; color: #7289da; }
 
 .balance {
@@ -35,19 +36,13 @@ h1 { margin-top: 20px; color: #7289da; }
   width: 260px;
   padding: 15px;
   transition: transform 0.2s;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .item:hover { transform: scale(1.05); }
 
-.item img { width: 100%; border-radius: 10px; }
-
-.item h2 { margin: 10px 0; }
-
-.item p {
-  font-size: 14px;
-  color: #ccc;
-  text-align: left;
+.item img {
+  width: 100%;
+  border-radius: 10px;
 }
 
 button {
@@ -59,40 +54,38 @@ button {
   cursor: pointer;
   margin-top: 10px;
 }
-
-footer {
-  margin-top: 40px;
-  color: #99aab5;
-  font-size: 14px;
-}
 </style>
-</head>
 
+</head>
 <body>
 
 <h1>🛒 V-Umbrella Shop</h1>
+
 <p class="balance">💰 Solde : <span id="coins">0</span> ambres</p>
 
 <div class="shop-container" id="shop"></div>
 
 <script>
-const API_URL = "https://TON-APP.up.railway.app"; // 🔥 A MODIFIER
-
+// 🔥 IMPORTANT : ton ID Discord
 let userId = prompt("Entre ton ID Discord :");
 
+// 🔥 TON SERVEUR RAILWAY (CHANGE ICI)
+const API = "https://TON-RAILWAY-URL.up.railway.app";
+
+// coins display
 const coinsEl = document.getElementById('coins');
 
-// Items
+// Items shop
 const items = [
-  { name: "Kit Épique", price: 100, content: "Ptera castré + Armure Épique + Arme Épique", img: "https://i.imgur.com/ZdKJx1A.png" },
+  { name: "Kit Épique", price: 100, content: "Ptera + Armure + Arme épique", img: "https://i.imgur.com/ZdKJx1A.png" },
   { name: "Kit Farm", price: 100, content: "Argentavis + Ankylosaure + Doedicurus", img: "https://i.imgur.com/5lJZr5f.png" },
-  { name: "Kit Mythic VIP", price: 700, content: "500 points + équipements", img: "https://i.imgur.com/yhXmW1L.png" },
-  { name: "Ressources", price: 600, content: "5k ressources", img: "https://i.imgur.com/nk7Up9f.png" }
+  { name: "Kit Mythic VIP", price: 700, content: "+500 niveaux + équipement mythique", img: "https://i.imgur.com/yhXmW1L.png" },
+  { name: "Ressources", price: 600, content: "5k de chaque ressource", img: "https://i.imgur.com/nk7Up9f.png" }
 ];
 
+// afficher shop
 const shopContainer = document.getElementById('shop');
 
-// Affichage shop
 items.forEach(item => {
   const div = document.createElement('div');
   div.className = 'item';
@@ -100,7 +93,7 @@ items.forEach(item => {
   div.innerHTML = `
     <img src="${item.img}">
     <h2>${item.name}</h2>
-    <p>Prix : ${item.price} ambres</p>
+    <p>💰 Prix : ${item.price} ambres</p>
     <p>${item.content}</p>
     <button onclick="buyItem('${item.name}', ${item.price})">Acheter</button>
   `;
@@ -108,46 +101,43 @@ items.forEach(item => {
   shopContainer.appendChild(div);
 });
 
-// Récupérer solde
+// 🔥 GET BALANCE
 async function updateBalance() {
-  try {
-    const res = await fetch(`${API_URL}/balance/${userId}`);
-    const data = await res.json();
-    coinsEl.innerText = data.coins;
-  } catch (err) {
-    console.error(err);
-    coinsEl.innerText = "Erreur";
-  }
+  const res = await fetch(`${API}/balance/${userId}`);
+  const data = await res.json();
+  coinsEl.innerText = data.coins;
 }
 
-// Acheter
+// 🔥 BUY ITEM
 async function buyItem(name, price) {
-  try {
-    const res = await fetch(`${API_URL}/buy`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, item: name, price })
-    });
+  const res = await fetch(`${API}/buy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      userId,
+      item: name,
+      price
+    })
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    if (data.error) {
-      alert(data.error);
-    } else {
-      alert(`✅ Achat réussi : ${data.item}`);
-      coinsEl.innerText = data.newBalance;
-    }
-  } catch (err) {
-    alert("❌ Erreur serveur");
+  if (data.error) {
+    alert("❌ " + data.error);
+  } else {
+    alert("✅ Achat réussi : " + data.item);
+    coinsEl.innerText = data.newBalance;
   }
 }
 
-// Charger solde
+// load
 updateBalance();
 </script>
 
 <footer>
-Shop officiel du bot <strong>V-Umbrella</strong>
+Shop officiel V-Umbrella
 </footer>
 
 </body>
