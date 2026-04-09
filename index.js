@@ -1,6 +1,17 @@
+const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
+// ✅ Création du client
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
+});
+
+// ✅ Ensuite seulement
 client.commands = new Map();
 
 // Charger les commandes
@@ -28,3 +39,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 });
+
+// Connexion du bot
+client.login(process.env.TOKEN);
