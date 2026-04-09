@@ -5,19 +5,58 @@ const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
 
-// 🌐 Serveur web (pour Railway 24/7)
 const app = express();
+app.use(express.json());
+
+// 🌐 PORT RAILWAY
 const PORT = process.env.PORT || 3000;
 
+// =====================
+// 🌐 API SHOP (TEST SIMPLE)
+// =====================
+
+let users = {}; // mémoire simple (tu pourras upgrade en DB après)
+
 app.get('/', (req, res) => {
-    res.send('Bot en ligne !');
+    res.send('V-Umbrella API is online 🚀');
 });
 
-app.listen(PORT, () => {
-    console.log(`🌐 Serveur lancé sur le port ${PORT}`);
+// 💰 BALANCE
+app.get('/balance/:id', (req, res) => {
+    const id = req.params.id;
+
+    if (!users[id]) users[id] = { coins: 500 }; // base test
+
+    res.json({ coins: users[id].coins });
 });
 
-// 🤖 Création du bot
+// 🛒 BUY
+app.post('/buy', (req, res) => {
+    const { userId, item, price } = req.body;
+
+    if (!userId || !item || !price) {
+        return res.json({ error: "Missing data" });
+    }
+
+    if (!users[userId]) users[userId] = { coins: 500 };
+
+    if (users[userId].coins < price) {
+        return res.json({ error: "Pas assez d'ambre" });
+    }
+
+    users[userId].coins -= price;
+
+    res.json({
+        success: true,
+        item,
+        newBalance: users[userId].coins
+    });
+});
+
+// =====================
+// 🤖 DISCORD BOT
+// =====================
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -26,15 +65,12 @@ const client = new Client({
     ]
 });
 
-// 📂 Charger les commandes
 client.commands = new Map();
 
 const commandsPath = path.join(__dirname, 'commands');
 
-if (!fs.existsSync(commandsPath)) {
-    console.log("❌ Dossier commands introuvable !");
-} else {
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+if (fs.existsSync(commandsPath)) {
+    const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
 
     for (const file of commandFiles) {
         try {
@@ -47,19 +83,22 @@ if (!fs.existsSync(commandsPath)) {
 
             client.commands.set(command.data.name, command);
             console.log(`✅ Commande chargée: ${command.data.name}`);
+
         } catch (err) {
-            console.log(`❌ Erreur dans ${file}`);
+            console.log(`❌ Erreur commande: ${file}`);
             console.error(err);
         }
     }
+} else {
+    console.log("❌ Dossier commands introuvable");
 }
 
-// ⚡ Quand le bot est prêt
-client.once('clientReady', () => {
+// ⚡ READY EVENT (CORRIGÉ)
+client.once('ready', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
-// 🎮 Gestion des slash commands
+// 🎮 COMMANDES
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -73,12 +112,17 @@ client.on('interactionCreate', async interaction => {
 
         if (!interaction.replied) {
             await interaction.reply({
-                content: '❌ Une erreur est survenue',
+                content: '❌ Erreur commande',
                 ephemeral: true
             });
         }
     }
 });
 
-// 🚀 Connexion
+// 🚀 START SERVER (RAILWAY FIX)
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Serveur lancé sur le port ${PORT}`);
+});
+
+// 🤖 LOGIN BOT
 client.login(process.env.TOKEN);
