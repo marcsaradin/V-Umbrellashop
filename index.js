@@ -8,13 +8,12 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const app = express();
 app.use(express.json());
 
-// 🌐 PORT RAILWAY
-const PORT = process.env.PORT || 3000;
+// 🌐 RAILWAY PORT FIX
+const PORT = process.env.PORT;
 
 // =====================
-// 🌐 API SHOP
+// 💾 SIMPLE DB MEMOIRE
 // =====================
-
 let users = {};
 
 function getUser(id) {
@@ -24,7 +23,10 @@ function getUser(id) {
     return users[id];
 }
 
-// 🟢 HOME
+// =====================
+// 🌐 API
+// =====================
+
 app.get('/', (req, res) => {
     res.send('V-Umbrella API is online 🚀');
 });
@@ -78,6 +80,9 @@ if (fs.existsSync(commandsPath)) {
     const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
 
     for (const file of commandFiles) {
+
+        if (file === "daily.js") continue;
+
         try {
             const command = require(`./commands/${file}`);
 
@@ -94,11 +99,9 @@ if (fs.existsSync(commandsPath)) {
             console.error(err);
         }
     }
-} else {
-    console.log("❌ Dossier commands introuvable");
 }
 
-// ⚡ DISCORD READY FIX (IMPORTANT)
+// ⚡ READY FIX
 client.once('clientReady', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
@@ -124,10 +127,12 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// 🚀 START SERVER (RAILWAY FIX)
+// 🚀 START RAILWAY FIX
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Serveur lancé sur le port ${PORT}`);
+    console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
-// 🤖 LOGIN BOT
-client.login(process.env.TOKEN);
+// 🤖 LOGIN BOT SAFE
+client.login(process.env.TOKEN)
+    .then(() => console.log("🤖 Bot connecté"))
+    .catch(err => console.error("❌ Token invalide"));

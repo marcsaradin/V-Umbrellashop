@@ -1,15 +1,13 @@
-const { SlashCommandBuilder } = require('discord.js');
-
 const shopURL = "https://v-umbrellashop-production.up.railway.app";
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('shop')
-        .setDescription('Ouvre le shop V-Umbrella'),
+  data: {
+    name: "shop"
+  },
 
-    async execute(interaction) {
-        await interaction.reply({
-            content: `🛒 **V-Umbrella Shop**\n🔗 Clique ici pour accéder au shop :\n${shopURL}`
-        });
-    }
+  async execute(interaction) {
+    await interaction.reply({
+      content: `🛒 V-Umbrella Shop\n🔗 ${shopURL}`
+    });
+  }
 };
