@@ -1,12 +1,22 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
+const path = require('path');
 
-const FILE = './users.json';
+const FILE = path.join(__dirname, '../users.json');
+
+function loadDB() {
+    if (!fs.existsSync(FILE)) return {};
+    return JSON.parse(fs.readFileSync(FILE, 'utf8'));
+}
+
+function saveDB(data) {
+    fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Ajouter des ambres à un joueur (admin)')
+        .setDescription('Donner des ambres à un joueur')
         .addUserOption(option =>
             option.setName('user')
                 .setDescription('Joueur')
@@ -20,22 +30,18 @@ module.exports = {
 
     async execute(interaction) {
 
+        // 🔐 ADMIN ONLY
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: "❌ Pas permission", ephemeral: true });
+            return interaction.reply({
+                content: "❌ Pas la permission",
+                ephemeral: true
+            });
         }
 
         const target = interaction.options.getUser('user');
         const montant = interaction.options.getInteger('montant');
 
-        if (montant <= 0) {
-            return interaction.reply({ content: "❌ montant invalide", ephemeral: true });
-        }
-
-        let users = {};
-
-        if (fs.existsSync(FILE)) {
-            users = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-        }
+        let users = loadDB();
 
         if (!users[target.id]) {
             users[target.id] = { coins: 500 };
@@ -43,7 +49,9 @@ module.exports = {
 
         users[target.id].coins += montant;
 
-        fs.writeFileSync(FILE, JSON.stringify(users, null, 2));
+        saveDB(users);
+
+        console.log(`💰 ADDCOINS: ${target.id} +${montant}`);
 
         return interaction.reply(
             `✅ ${montant} ambres ajoutés à <@${target.id}>`
