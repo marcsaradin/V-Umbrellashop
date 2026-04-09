@@ -1,44 +1,52 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 
-const FILE = './players.json';
+const FILE = './users.json';
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Ajouter des ambres à ton compte (admin seulement)')
+        .setDescription('Ajouter des ambres à un joueur (admin)')
+        .addUserOption(option =>
+            option.setName('user')
+                .setDescription('Joueur')
+                .setRequired(true)
+        )
         .addIntegerOption(option =>
             option.setName('montant')
-                .setDescription('Nombre d\'ambres à ajouter')
+                .setDescription('Montant')
                 .setRequired(true)
         ),
 
     async execute(interaction) {
-        // Vérifier que l'utilisateur est admin
+
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Tu n\'as pas la permission !', ephemeral: true });
+            return interaction.reply({ content: "❌ Pas permission", ephemeral: true });
         }
 
-        const userId = interaction.user.id;
+        const target = interaction.options.getUser('user');
         const montant = interaction.options.getInteger('montant');
 
-        // Charger players.json
-        let players = {};
+        if (montant <= 0) {
+            return interaction.reply({ content: "❌ montant invalide", ephemeral: true });
+        }
+
+        let users = {};
+
         if (fs.existsSync(FILE)) {
-            players = JSON.parse(fs.readFileSync(FILE));
+            users = JSON.parse(fs.readFileSync(FILE, 'utf8'));
         }
 
-        // Créer joueur si pas existant
-        if (!players[userId]) {
-            players[userId] = { ambre: 0, inventory: [] };
+        if (!users[target.id]) {
+            users[target.id] = { coins: 500 };
         }
 
-        // Ajouter ambres
-        players[userId].ambre += montant;
+        users[target.id].coins += montant;
 
-        // Sauvegarder
-        fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
+        fs.writeFileSync(FILE, JSON.stringify(users, null, 2));
 
-        await interaction.reply(`✅ Tu as ajouté ${montant} ambres à ton compte !`);
+        return interaction.reply(
+            `✅ ${montant} ambres ajoutés à <@${target.id}>`
+        );
     }
 };

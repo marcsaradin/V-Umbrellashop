@@ -8,11 +8,11 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const app = express();
 app.use(express.json());
 
-// 🌐 RAILWAY PORT FIX
+// 🌐 PORT RAILWAY
 const PORT = process.env.PORT;
 
 // =====================
-// 💾 DATABASE (FIX IMPORTANT)
+// 💾 DATABASE UNIQUE
 // =====================
 const DB_FILE = './users.json';
 
@@ -49,7 +49,7 @@ app.get('/balance/:id', (req, res) => {
     res.json({ coins: user.coins });
 });
 
-// 🛒 BUY
+// 🛒 BUY ITEM
 app.post('/buy', (req, res) => {
     const { userId, item, price } = req.body;
 
@@ -64,6 +64,7 @@ app.post('/buy', (req, res) => {
     }
 
     user.coins -= price;
+
     saveDB(users);
 
     res.json({
@@ -112,11 +113,9 @@ if (fs.existsSync(commandsPath)) {
             console.error(err);
         }
     }
-} else {
-    console.log("❌ Dossier commands introuvable");
 }
 
-// ⚡ DISCORD READY FIX
+// ⚡ READY FIX
 client.once('clientReady', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
@@ -142,12 +141,12 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// 🚀 START SERVER (RAILWAY FIX)
+// 🚀 START RAILWAY
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
-// 🤖 LOGIN BOT SAFE
+// 🤖 LOGIN BOT
 client.login(process.env.TOKEN)
     .then(() => console.log("🤖 Bot connecté"))
     .catch(err => console.error("❌ Token invalide"));
