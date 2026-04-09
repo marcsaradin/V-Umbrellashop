@@ -2,6 +2,7 @@ const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
+// 🔥 chemin ABSOLU (IMPORTANT RAILWAY FIX)
 const FILE = path.join(__dirname, '../users.json');
 
 function loadDB() {
@@ -16,30 +17,34 @@ function saveDB(data) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Donner des ambres à un joueur')
+        .setDescription('Give des ambres à un membre')
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('Joueur')
+                .setDescription('Utilisateur')
                 .setRequired(true)
         )
         .addIntegerOption(option =>
-            option.setName('montant')
+            option.setName('amount')
                 .setDescription('Montant')
                 .setRequired(true)
         ),
 
     async execute(interaction) {
 
-        // 🔐 ADMIN ONLY
+        console.log("🔥 addcoins utilisé");
+
+        // 🔐 permission check
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return interaction.reply({
-                content: "❌ Pas la permission",
+                content: "❌ Tu n'as pas la permission",
                 ephemeral: true
             });
         }
 
         const target = interaction.options.getUser('user');
-        const montant = interaction.options.getInteger('montant');
+        const amount = interaction.options.getInteger('amount');
+
+        console.log("➡ target:", target.id, "amount:", amount);
 
         let users = loadDB();
 
@@ -47,14 +52,14 @@ module.exports = {
             users[target.id] = { coins: 500 };
         }
 
-        users[target.id].coins += montant;
+        users[target.id].coins += amount;
 
         saveDB(users);
 
-        console.log(`💰 ADDCOINS: ${target.id} +${montant}`);
+        console.log("💾 DB updated");
 
         return interaction.reply(
-            `✅ ${montant} ambres ajoutés à <@${target.id}>`
+            `✅ +${amount} ambres donnés à <@${target.id}>`
         );
     }
 };
