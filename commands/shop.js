@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 
-const shopURL = "https://marcsaradin.github.io/V-Umbrellashop/shop.html";
+const shopURL = "https://v-umbrellashop-production.up.railway.app";
 
 module.exports = {
     data: new SlashCommandBuilder()
