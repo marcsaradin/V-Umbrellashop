@@ -13,6 +13,8 @@ module.exports = {
         const username = interaction.user.username;
 
         let players = {};
+
+        // Charger les données
         if (fs.existsSync(FILE)) {
             players = JSON.parse(fs.readFileSync(FILE));
         }
@@ -23,13 +25,20 @@ module.exports = {
             fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
         }
 
-        const p = players[userId];
+        const player = players[userId];
 
-        await interaction.reply(
-`👤 Profil de ${username}
+        // Format inventaire
+        const inventory = player.inventory.length
+            ? player.inventory.join(', ')
+            : 'vide';
 
-💰 Ambres : ${p.ambre}
-🎒 Inventaire : ${p.inventory.length ? p.inventory.join(', ') : 'vide'}`
-        );
+        // Réponse propre
+        await interaction.reply({
+            content:
+`👤 **Profil de ${username}**
+
+💰 **Ambres :** ${player.ambre}
+🎒 **Inventaire :** ${inventory}`
+        });
     }
 };

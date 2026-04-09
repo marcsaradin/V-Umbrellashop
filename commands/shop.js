@@ -9,7 +9,7 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.reply({
-            content: `🛒 **V-Umbrella Shop**\n👉 ${shopURL}`
+            content: `🛒 **V-Umbrella Shop**\n🔗 Clique ici pour accéder au shop :\n${shopURL}`
         });
     }
 };
