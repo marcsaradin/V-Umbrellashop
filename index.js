@@ -12,9 +12,20 @@ app.use(express.json());
 const PORT = process.env.PORT;
 
 // =====================
-// 💾 SIMPLE DB MEMOIRE
+// 💾 DATABASE (FIX IMPORTANT)
 // =====================
-let users = {};
+const DB_FILE = './users.json';
+
+function loadDB() {
+    if (!fs.existsSync(DB_FILE)) return {};
+    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+}
+
+function saveDB(data) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+}
+
+let users = loadDB();
 
 function getUser(id) {
     if (!users[id]) {
@@ -24,9 +35,10 @@ function getUser(id) {
 }
 
 // =====================
-// 🌐 API
+// 🌐 API SHOP
 // =====================
 
+// 🟢 HOME
 app.get('/', (req, res) => {
     res.send('V-Umbrella API is online 🚀');
 });
@@ -52,6 +64,7 @@ app.post('/buy', (req, res) => {
     }
 
     user.coins -= price;
+    saveDB(users);
 
     res.json({
         success: true,
@@ -99,9 +112,11 @@ if (fs.existsSync(commandsPath)) {
             console.error(err);
         }
     }
+} else {
+    console.log("❌ Dossier commands introuvable");
 }
 
-// ⚡ READY FIX
+// ⚡ DISCORD READY FIX
 client.once('clientReady', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
@@ -127,7 +142,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// 🚀 START RAILWAY FIX
+// 🚀 START SERVER (RAILWAY FIX)
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
