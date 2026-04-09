@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>V-Umbrella Shop</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #1e1f23;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+h1 { margin-top: 20px; color: #7289da; }
+
+.balance {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+.shop-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.item {
+  background: #2c2f33;
+  border: 2px solid #7289da;
+  border-radius: 15px;
+  width: 260px;
+  padding: 15px;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.item:hover { transform: scale(1.05); }
+
+.item img { width: 100%; border-radius: 10px; }
+
+.item h2 { margin: 10px 0; }
+
+.item p {
+  font-size: 14px;
+  color: #ccc;
+  text-align: left;
+}
+
+button {
+  padding: 10px 20px;
+  background: #7289da;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+footer {
+  margin-top: 40px;
+  color: #99aab5;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🛒 V-Umbrella Shop</h1>
+<p class="balance">💰 Solde : <span id="coins">0</span> ambres</p>
+
+<div class="shop-container" id="shop"></div>
+
+<script>
+const API_URL = "https://TON-APP.up.railway.app"; // 🔥 A MODIFIER
+
+let userId = prompt("Entre ton ID Discord :");
+
+const coinsEl = document.getElementById('coins');
+
+// Items
+const items = [
+  { name: "Kit Épique", price: 100, content: "Ptera castré + Armure Épique + Arme Épique", img: "https://i.imgur.com/ZdKJx1A.png" },
+  { name: "Kit Farm", price: 100, content: "Argentavis + Ankylosaure + Doedicurus", img: "https://i.imgur.com/5lJZr5f.png" },
+  { name: "Kit Mythic VIP", price: 700, content: "500 points + équipements", img: "https://i.imgur.com/yhXmW1L.png" },
+  { name: "Ressources", price: 600, content: "5k ressources", img: "https://i.imgur.com/nk7Up9f.png" }
+];
+
+const shopContainer = document.getElementById('shop');
+
+// Affichage shop
+items.forEach(item => {
+  const div = document.createElement('div');
+  div.className = 'item';
+
+  div.innerHTML = `
+    <img src="${item.img}">
+    <h2>${item.name}</h2>
+    <p>Prix : ${item.price} ambres</p>
+    <p>${item.content}</p>
+    <button onclick="buyItem('${item.name}', ${item.price})">Acheter</button>
+  `;
+
+  shopContainer.appendChild(div);
+});
+
+// Récupérer solde
+async function updateBalance() {
+  try {
+    const res = await fetch(`${API_URL}/balance/${userId}`);
+    const data = await res.json();
+    coinsEl.innerText = data.coins;
+  } catch (err) {
+    console.error(err);
+    coinsEl.innerText = "Erreur";
+  }
+}
+
+// Acheter
+async function buyItem(name, price) {
+  try {
+    const res = await fetch(`${API_URL}/buy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, item: name, price })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert(`✅ Achat réussi : ${data.item}`);
+      coinsEl.innerText = data.newBalance;
+    }
+  } catch (err) {
+    alert("❌ Erreur serveur");
+  }
+}
+
+// Charger solde
+updateBalance();
+</script>
+
+<footer>
+Shop officiel du bot <strong>V-Umbrella</strong>
+</footer>
+
+</body>
+</html>
