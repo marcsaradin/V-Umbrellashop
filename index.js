@@ -12,22 +12,27 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 // =====================
-// 🌐 API SHOP (TEST SIMPLE)
+// 🌐 API SHOP
 // =====================
 
-let users = {}; // mémoire simple (tu pourras upgrade en DB après)
+let users = {};
 
+function getUser(id) {
+    if (!users[id]) {
+        users[id] = { coins: 500 };
+    }
+    return users[id];
+}
+
+// 🟢 HOME
 app.get('/', (req, res) => {
     res.send('V-Umbrella API is online 🚀');
 });
 
 // 💰 BALANCE
 app.get('/balance/:id', (req, res) => {
-    const id = req.params.id;
-
-    if (!users[id]) users[id] = { coins: 500 }; // base test
-
-    res.json({ coins: users[id].coins });
+    const user = getUser(req.params.id);
+    res.json({ coins: user.coins });
 });
 
 // 🛒 BUY
@@ -38,18 +43,18 @@ app.post('/buy', (req, res) => {
         return res.json({ error: "Missing data" });
     }
 
-    if (!users[userId]) users[userId] = { coins: 500 };
+    const user = getUser(userId);
 
-    if (users[userId].coins < price) {
+    if (user.coins < price) {
         return res.json({ error: "Pas assez d'ambre" });
     }
 
-    users[userId].coins -= price;
+    user.coins -= price;
 
     res.json({
         success: true,
         item,
-        newBalance: users[userId].coins
+        newBalance: user.coins
     });
 });
 
@@ -93,8 +98,8 @@ if (fs.existsSync(commandsPath)) {
     console.log("❌ Dossier commands introuvable");
 }
 
-// ⚡ READY EVENT (CORRIGÉ)
-client.once('ready', () => {
+// ⚡ DISCORD READY FIX (IMPORTANT)
+client.once('clientReady', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
