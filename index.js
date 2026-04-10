@@ -1,108 +1,44 @@
 require('dotenv').config();
 
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
 app.use(express.json());
 
-// 🔥 Permet d'afficher ton shop HTML
+// 🔥 IMPORTANT : dossier public
 app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 
 // =====================
-// 🌐 SHOP WEB
+// 🌐 PAGE SHOP
 // =====================
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'shop.html'));
 });
 
 // =====================
-// 💰 MEMOIRE JOUEURS (test simple)
+// 💰 USERS (test simple mémoire)
 // =====================
-
 let users = {};
 
 // =====================
 // 🤖 DISCORD BOT
 // =====================
-
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages
-    ]
+    intents: [GatewayIntentBits.Guilds]
 });
 
-client.commands = new Map();
-
-const commandsPath = path.join(__dirname, 'commands');
-
-if (fs.existsSync(commandsPath)) {
-    const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
-
-    for (const file of commandFiles) {
-        try {
-            const command = require(`./commands/${file}`);
-
-            if (!command.data || !command.data.name) {
-                console.log(`❌ Commande invalide: ${file}`);
-                continue;
-            }
-
-            client.commands.set(command.data.name, command);
-            console.log(`✅ Commande chargée: ${command.data.name}`);
-
-        } catch (err) {
-            console.log(`❌ Erreur commande: ${file}`);
-            console.error(err);
-        }
-    }
-} else {
-    console.log("❌ Dossier commands introuvable");
-}
-
-// =====================
-// ⚡ READY BOT
-// =====================
-
-client.once('clientReady', () => {
-    console.log("🤖 Bot connecté");
+// BOT READY
+client.once('ready', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
 // =====================
-// 🎮 COMMANDES DISCORD
+// 💰 BALANCE API
 // =====================
-
-client.on('interactionCreate', async interaction => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
-
-    try {
-        await command.execute(interaction);
-    } catch (err) {
-        console.error(err);
-
-        if (!interaction.replied) {
-            await interaction.reply({
-                content: "❌ Erreur commande",
-                ephemeral: true
-            });
-        }
-    }
-});
-
-// =====================
-// 💰 API BALANCE
-// =====================
-
 app.get('/balance/:id', (req, res) => {
     const id = req.params.id;
 
@@ -112,9 +48,8 @@ app.get('/balance/:id', (req, res) => {
 });
 
 // =====================
-// 🛒 API BUY + LOG DISCORD
+// 🛒 BUY API (SAFE VERSION)
 // =====================
-
 app.post('/buy', async (req, res) => {
     const { userId, item, price } = req.body;
 
@@ -130,25 +65,20 @@ app.post('/buy', async (req, res) => {
 
     users[userId].coins -= price;
 
-    // 🔥 LOG DISCORD
+    // 🔥 LOG DISCORD SAFE
     try {
         const channelId = process.env.SHOP_CHANNEL_ID;
 
-        if (channelId) {
-            const channel = await client.channels.fetch(channelId).catch(() => null);
-
+        if (channelId && client.isReady()) {
+            const channel = await client.channels.fetch(channelId);
             if (channel) {
-                await channel.send(
-                    `🛒 **Achat effectué**
-
-👤 <@${userId}>
-📦 Item: **${item}**
-💰 Prix: **${price} ambres**`
+                channel.send(
+                    `🛒 Achat: ${item}\n👤 <@${userId}>\n💰 ${price} ambres`
                 );
             }
         }
-    } catch (err) {
-        console.error("❌ Erreur Discord:", err);
+    } catch (e) {
+        console.log("Discord log error:", e);
     }
 
     res.json({
@@ -161,13 +91,11 @@ app.post('/buy', async (req, res) => {
 // =====================
 // 🚀 START SERVER
 // =====================
-
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Serveur lancé sur ${PORT}`);
+    console.log(`🌐 Serveur OK sur ${PORT}`);
 });
 
 // =====================
 // 🤖 LOGIN BOT
 // =====================
-
 client.login(process.env.TOKEN);
