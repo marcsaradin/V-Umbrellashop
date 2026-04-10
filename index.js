@@ -1,17 +1,17 @@
 require('dotenv').config();
 
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // =====================
-// 💰 STOCKAGE SIMPLE
+// 💰 STOCKAGE
 // =====================
 let users = {};
 
@@ -23,43 +23,31 @@ const client = new Client({
 });
 
 // =====================
-// 📂 CHARGER COMMANDES
+// 📂 COMMANDES
 // =====================
 client.commands = new Map();
 
-const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
 
-if (fs.existsSync(commandsPath)) {
-    const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
-
-    for (const file of files) {
-        try {
-            const command = require(`./commands/${file}`);
-
-            if (!command.data || !command.data.name) {
-                console.log(`❌ Commande invalide: ${file}`);
-                continue;
-            }
-
-            client.commands.set(command.data.name, command);
-            console.log(`✅ Commande chargée: ${command.data.name}`);
-
-        } catch (err) {
-            console.log(`❌ Erreur fichier: ${file}`);
-            console.error(err);
-        }
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    if (!command.data || !command.data.name) {
+        console.log(`❌ Commande invalide: ${file}`);
+        continue;
     }
+    client.commands.set(command.data.name, command);
+    console.log(`✅ Commande chargée: ${command.data.name}`);
 }
 
 // =====================
-// ⚡ BOT READY
+// READY
 // =====================
 client.once('ready', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
 // =====================
-// 🎮 GESTION COMMANDES
+// COMMANDES DISCORD
 // =====================
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
@@ -70,11 +58,10 @@ client.on('interactionCreate', async interaction => {
     try {
         await command.execute(interaction);
     } catch (err) {
-        console.error("Erreur commande:", err);
-
+        console.log(err);
         if (!interaction.replied) {
             await interaction.reply({
-                content: "❌ Erreur commande",
+                content: "❌ Erreur",
                 ephemeral: true
             });
         }
@@ -82,7 +69,7 @@ client.on('interactionCreate', async interaction => {
 });
 
 // =====================
-// 🌐 SHOP PAGE
+// 🌐 PAGE SHOP
 // =====================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'shop.html'));
@@ -100,7 +87,7 @@ app.get('/balance/:id', (req, res) => {
 });
 
 // =====================
-// 🛒 BUY + MESSAGE DISCORD
+// 🛒 BUY
 // =====================
 app.post('/buy', async (req, res) => {
     const { userId, item, price } = req.body;
@@ -112,22 +99,18 @@ app.post('/buy', async (req, res) => {
     if (!users[userId]) users[userId] = { coins: 500 };
 
     if (users[userId].coins < price) {
-        return res.json({ error: "Pas assez d'ambre" });
+        return res.json({ error: "Pas assez d'argent" });
     }
 
     users[userId].coins -= price;
 
-    // 🔥 MESSAGE DISCORD
     try {
         const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID);
-
         if (channel) {
-            await channel.send(
-                `🛒 Achat\n👤 <@${userId}>\n📦 ${item}\n💰 ${price}`
-            );
+            channel.send(`🛒 Achat\n<@${userId}> a acheté ${item} pour ${price}`);
         }
-    } catch (err) {
-        console.log("Erreur Discord:", err);
+    } catch (e) {
+        console.log(e);
     }
 
     res.json({
@@ -137,13 +120,13 @@ app.post('/buy', async (req, res) => {
 });
 
 // =====================
-// 🚀 START SERVEUR
+// 🚀 START
 // =====================
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
 // =====================
-// 🤖 LOGIN
+// LOGIN
 // =====================
 client.login(process.env.TOKEN);

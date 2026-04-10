@@ -7,7 +7,7 @@ module.exports = {
 
   async execute(interaction) {
     await interaction.reply({
-      content: "🛒 Shop : https://v-umbrellashop-production.up.railway.app"
+      content: "🛒 https://v-umbrellashop-production.up.railway.app"
     });
   }
 };
