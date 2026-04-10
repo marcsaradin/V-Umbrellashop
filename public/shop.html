@@ -1,147 +1,34 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>V-Umbrella Shop</title>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #1e1f23;
-  color: white;
-  text-align: center;
-  margin: 0;
-}
-
-h1 {
-  color: #7289da;
-  margin-top: 20px;
-}
-
-.balance {
-  margin: 10px;
-  font-size: 18px;
-}
-
-.shop {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  padding: 20px;
-}
-
-.item {
-  background: #2c2f33;
-  border: 2px solid #7289da;
-  border-radius: 12px;
-  width: 250px;
-  padding: 15px;
-}
-
-.item img {
-  width: 100%;
-  border-radius: 10px;
-}
-
-button {
-  background: #7289da;
-  border: none;
-  padding: 10px;
-  color: white;
-  cursor: pointer;
-  border-radius: 6px;
-  margin-top: 10px;
-}
-
-button:disabled {
-  background: gray;
-  cursor: not-allowed;
-}
-</style>
+<title>Shop</title>
 </head>
 
 <body>
 
-<h1>🛒 V-Umbrella Shop</h1>
+<h1>🛒 Shop</h1>
 
-<p class="balance">💰 Solde : <span id="coins">0</span> ambres</p>
-
-<div class="shop" id="shop"></div>
+<button onclick="buy()">Acheter item</button>
 
 <script>
+const API = window.location.origin;
 
-// 🔥 LIEN RAILWAY CORRIGÉ
-const API = "https://v-umbrellashop-production.up.railway.app";
+const userId = prompt("Ton ID Discord");
 
-// 🔥 ID Discord
-let userId = prompt("Entre ton ID Discord :");
-
-const coinsEl = document.getElementById("coins");
-
-const items = [
-  { name: "Kit Épique", price: 100, desc: "Ptera + Armure + Arme épique", img: "https://i.imgur.com/ZdKJx1A.png" },
-  { name: "Kit Farm", price: 100, desc: "Argentavis + Ankylosaure", img: "https://i.imgur.com/5lJZr5f.png" },
-  { name: "Kit Mythic VIP", price: 700, desc: "+500 niveaux + équipement mythique", img: "https://i.imgur.com/yhXmW1L.png" }
-];
-
-const shop = document.getElementById("shop");
-
-items.forEach(item => {
-  const div = document.createElement("div");
-  div.className = "item";
-
-  div.innerHTML = `
-    <img src="${item.img}">
-    <h3>${item.name}</h3>
-    <p>💰 ${item.price} ambres</p>
-    <p>${item.desc}</p>
-    <button onclick="buy('${item.name}', ${item.price}, this)">Acheter</button>
-  `;
-
-  shop.appendChild(div);
-});
-
-async function loadBalance() {
-  try {
-    const res = await fetch(`${API}/balance/${userId}`);
-    const data = await res.json();
-    coinsEl.innerText = data.coins ?? 0;
-  } catch (e) {
-    coinsEl.innerText = "0";
-  }
-}
-
-async function buy(name, price, btn) {
-  btn.disabled = true;
-  btn.innerText = "Achat...";
-
-  try {
-    const res = await fetch(`${API}/buy`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, item: name, price })
+async function buy() {
+    const res = await fetch(API + "/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userId: userId,
+            item: "Test Item",
+            price: 100
+        })
     });
 
     const data = await res.json();
-
-    if (data.error) {
-      alert("❌ " + data.error);
-    } else {
-      alert("✅ Achat réussi : " + name);
-      coinsEl.innerText = data.newBalance;
-    }
-
-  } catch (e) {
-    alert("❌ Erreur serveur");
-  }
-
-  btn.disabled = false;
-  btn.innerText = "Acheter";
+    alert(JSON.stringify(data));
 }
-
-loadBalance();
-
 </script>
 
 </body>
