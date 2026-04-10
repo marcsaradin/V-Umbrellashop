@@ -3,15 +3,17 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 8080;
 
 // =====================
-// 💰 STOCKAGE
+// 💰 STOCKAGE (RAM)
 // =====================
 let users = {};
 
@@ -31,18 +33,20 @@ const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'))
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
+
     if (!command.data || !command.data.name) {
         console.log(`❌ Commande invalide: ${file}`);
         continue;
     }
+
     client.commands.set(command.data.name, command);
     console.log(`✅ Commande chargée: ${command.data.name}`);
 }
 
 // =====================
-// READY
+// READY BOT
 // =====================
-client.once('ready', () => {
+client.once('clientReady', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
@@ -59,9 +63,10 @@ client.on('interactionCreate', async interaction => {
         await command.execute(interaction);
     } catch (err) {
         console.log(err);
+
         if (!interaction.replied) {
             await interaction.reply({
-                content: "❌ Erreur",
+                content: "❌ Erreur commande",
                 ephemeral: true
             });
         }
@@ -87,7 +92,7 @@ app.get('/balance/:id', (req, res) => {
 });
 
 // =====================
-// 🛒 BUY
+// 🛒 BUY SYSTEM
 // =====================
 app.post('/buy', async (req, res) => {
     const { userId, item, price } = req.body;
@@ -99,18 +104,20 @@ app.post('/buy', async (req, res) => {
     if (!users[userId]) users[userId] = { coins: 500 };
 
     if (users[userId].coins < price) {
-        return res.json({ error: "Pas assez d'argent" });
+        return res.json({ error: "Pas assez de coins" });
     }
 
     users[userId].coins -= price;
 
+    // 🔔 log discord (safe)
     try {
-        const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID);
+        const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID).catch(() => null);
+
         if (channel) {
-            channel.send(`🛒 Achat\n<@${userId}> a acheté ${item} pour ${price}`);
+            channel.send(`🛒 Achat: <@${userId}> a acheté **${item}** pour ${price} coins`);
         }
     } catch (e) {
-        console.log(e);
+        console.log("Channel error:", e);
     }
 
     res.json({
@@ -120,13 +127,13 @@ app.post('/buy', async (req, res) => {
 });
 
 // =====================
-// 🚀 START
+// 🚀 START SERVER
 // =====================
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
 // =====================
-// LOGIN
+// LOGIN BOT
 // =====================
 client.login(process.env.TOKEN);
