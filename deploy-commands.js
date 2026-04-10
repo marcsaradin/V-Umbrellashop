@@ -5,7 +5,6 @@ require('dotenv').config();
 
 const commands = [];
 
-// 🔥 CHEMIN ABSOLU (IMPORTANT RAILWAY FIX)
 const commandsPath = path.join(__dirname, 'commands');
 
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -47,4 +46,4 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     } catch (error) {
         console.error('❌ Deploy error:', error);
     }
-})();
+})(); // 🔥 IMPORTANT MANQUANT
