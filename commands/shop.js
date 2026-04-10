@@ -1,16 +1,24 @@
+const { SlashCommandBuilder } = require('discord.js');
+
 module.exports = {
-  data: {
-    name: "shop",
-    description: "Ouvrir le shop"
-  },
+  data: new SlashCommandBuilder()
+    .setName('shop')
+    .setDescription('Ouvrir le shop'),
 
   async execute(interaction) {
     try {
       await interaction.reply({
-        content: "🛒 Ouvre le shop ici :\nhttps://v-umbrellashop-production.up.railway.app"
+        content: "🛒 **V-Umbrella Shop**\nhttps://v-umbrellashop-production.up.railway.app"
       });
-    } catch (err) {
-      console.log("Erreur shop:", err);
+    } catch (error) {
+      console.error("Erreur /shop :", error);
+
+      if (!interaction.replied) {
+        await interaction.reply({
+          content: "❌ Erreur lors de l'ouverture du shop",
+          ephemeral: true
+        });
+      }
     }
   }
 };
