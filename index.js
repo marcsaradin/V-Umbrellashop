@@ -6,22 +6,11 @@ const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
 app.use(express.json());
-
-// 🔥 IMPORTANT : dossier public
 app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
 
-// =====================
-// 🌐 PAGE SHOP
-// =====================
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'shop.html'));
-});
-
-// =====================
-// 💰 USERS (test simple mémoire)
-// =====================
+// 💰 DATABASE SIMPLE (mémoire)
 let users = {};
 
 // =====================
@@ -31,24 +20,32 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-// BOT READY
 client.once('ready', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
 // =====================
-// 💰 BALANCE API
+// 🌐 SHOP PAGE
+// =====================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'shop.html'));
+});
+
+// =====================
+// 💰 GET BALANCE
 // =====================
 app.get('/balance/:id', (req, res) => {
     const id = req.params.id;
 
-    if (!users[id]) users[id] = { coins: 500 };
+    if (!users[id]) {
+        users[id] = { coins: 500 };
+    }
 
     res.json({ coins: users[id].coins });
 });
 
 // =====================
-// 🛒 BUY API (SAFE VERSION)
+// 🛒 BUY ITEM + DISCORD LOG
 // =====================
 app.post('/buy', async (req, res) => {
     const { userId, item, price } = req.body;
@@ -57,28 +54,35 @@ app.post('/buy', async (req, res) => {
         return res.json({ error: "Missing data" });
     }
 
-    if (!users[userId]) users[userId] = { coins: 500 };
+    if (!users[userId]) {
+        users[userId] = { coins: 500 };
+    }
 
     if (users[userId].coins < price) {
         return res.json({ error: "Pas assez d'ambre" });
     }
 
-    users[userId].coins -= price;
+    users[userId].coins -= Number(price);
 
-    // 🔥 LOG DISCORD SAFE
+    // 🔥 LOG DISCORD
     try {
         const channelId = process.env.SHOP_CHANNEL_ID;
 
         if (channelId && client.isReady()) {
             const channel = await client.channels.fetch(channelId);
+
             if (channel) {
-                channel.send(
-                    `🛒 Achat: ${item}\n👤 <@${userId}>\n💰 ${price} ambres`
+                await channel.send(
+                    `🛒 **Achat effectué**
+
+👤 <@${userId}>
+📦 Item: **${item}**
+💰 Prix: **${price} ambres**`
                 );
             }
         }
-    } catch (e) {
-        console.log("Discord log error:", e);
+    } catch (err) {
+        console.log("❌ Discord buy error:", err);
     }
 
     res.json({
@@ -89,10 +93,33 @@ app.post('/buy', async (req, res) => {
 });
 
 // =====================
+// 💰 ADDCOINS (ADMIN / API FIX)
+// =====================
+app.post('/addcoins', (req, res) => {
+    const { userId, amount } = req.body;
+
+    if (!userId || !amount) {
+        return res.json({ error: "Missing data" });
+    }
+
+    if (!users[userId]) {
+        users[userId] = { coins: 500 };
+    }
+
+    users[userId].coins += Number(amount);
+
+    res.json({
+        success: true,
+        userId,
+        newBalance: users[userId].coins
+    });
+});
+
+// =====================
 // 🚀 START SERVER
 // =====================
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Serveur OK sur ${PORT}`);
+    console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
 // =====================
