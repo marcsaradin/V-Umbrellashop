@@ -8,48 +8,30 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const app = express();
 app.use(express.json());
 
-// 🌐 PORT RAILWAY
-const PORT = process.env.PORT;
+// 🔥 IMPORTANT → permet d'afficher le HTML
+app.use(express.static('public'));
 
-// =====================
-// 💾 DATABASE UNIQUE
-// =====================
-const DB_FILE = './users.json';
+const PORT = process.env.PORT || 3000;
 
-function loadDB() {
-    if (!fs.existsSync(DB_FILE)) return {};
-    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-}
-
-function saveDB(data) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-}
-
-let users = loadDB();
-
-function getUser(id) {
-    if (!users[id]) {
-        users[id] = { coins: 500 };
-    }
-    return users[id];
-}
-
-// =====================
-// 🌐 API SHOP
-// =====================
-
-// 🟢 HOME
+// 🔥 PAGE PRINCIPALE = SHOP
 app.get('/', (req, res) => {
-    res.send('V-Umbrella API is online 🚀');
+    res.sendFile(path.join(__dirname, 'public', 'shop.html'));
 });
 
-// 💰 BALANCE
+// =====================
+// 💰 API SHOP
+// =====================
+
+let users = {};
+
 app.get('/balance/:id', (req, res) => {
-    const user = getUser(req.params.id);
-    res.json({ coins: user.coins });
+    const id = req.params.id;
+
+    if (!users[id]) users[id] = { coins: 500 };
+
+    res.json({ coins: users[id].coins });
 });
 
-// 🛒 BUY ITEM
 app.post('/buy', (req, res) => {
     const { userId, item, price } = req.body;
 
@@ -57,96 +39,65 @@ app.post('/buy', (req, res) => {
         return res.json({ error: "Missing data" });
     }
 
-    const user = getUser(userId);
+    if (!users[userId]) users[userId] = { coins: 500 };
 
-    if (user.coins < price) {
+    if (users[userId].coins < price) {
         return res.json({ error: "Pas assez d'ambre" });
     }
 
-    user.coins -= price;
-
-    saveDB(users);
+    users[userId].coins -= price;
 
     res.json({
         success: true,
         item,
-        newBalance: user.coins
+        newBalance: users[userId].coins
     });
 });
 
 // =====================
-// 🤖 DISCORD BOT
+// 🤖 BOT DISCORD
 // =====================
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.GuildMessages
     ]
 });
 
 client.commands = new Map();
 
 const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
 
-if (fs.existsSync(commandsPath)) {
-    const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
-
-    for (const file of commandFiles) {
-
-        if (file === "daily.js") continue;
-
-        try {
-            const command = require(`./commands/${file}`);
-
-            if (!command.data || !command.data.name) {
-                console.log(`❌ Commande invalide: ${file}`);
-                continue;
-            }
-
-            client.commands.set(command.data.name, command);
-            console.log(`✅ Commande chargée: ${command.data.name}`);
-
-        } catch (err) {
-            console.log(`❌ Erreur commande: ${file}`);
-            console.error(err);
-        }
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    if (command.data && command.data.name) {
+        client.commands.set(command.data.name, command);
+        console.log(`✅ Commande chargée: ${command.data.name}`);
     }
 }
 
-// ⚡ READY FIX
+// READY
 client.once('clientReady', () => {
+    console.log("🤖 Bot connecté");
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
-// 🎮 COMMANDES
+// COMMANDES
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
 
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(error);
-
-        if (!interaction.replied) {
-            await interaction.reply({
-                content: '❌ Erreur commande',
-                ephemeral: true
-            });
-        }
-    }
+    await command.execute(interaction);
 });
 
-// 🚀 START RAILWAY
+// START SERVER
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
-// 🤖 LOGIN BOT
-client.login(process.env.TOKEN)
-    .then(() => console.log("🤖 Bot connecté"))
-    .catch(err => console.error("❌ Token invalide"));
+// LOGIN
+client.login(process.env.TOKEN);
