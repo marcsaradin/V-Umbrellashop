@@ -1,144 +1,35 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>V-Umbrella Shop</title>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #1e1f23;
-  color: #fff;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
-
-h1 { margin-top: 20px; color: #7289da; }
-
-.balance {
-  font-size: 18px;
-  margin-top: 10px;
-}
-
-.shop-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  padding: 20px;
-}
-
-.item {
-  background: #2c2f33;
-  border: 2px solid #7289da;
-  border-radius: 15px;
-  width: 260px;
-  padding: 15px;
-  transition: transform 0.2s;
-}
-
-.item:hover { transform: scale(1.05); }
-
-.item img {
-  width: 100%;
-  border-radius: 10px;
-}
-
-button {
-  padding: 10px 20px;
-  background: #7289da;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-</style>
-
+<title>Shop</title>
 </head>
+
 <body>
 
-<h1>🛒 V-Umbrella Shop</h1>
+<h1>🛒 Shop</h1>
 
-<p class="balance">💰 Solde : <span id="coins">0</span> ambres</p>
-
-<div class="shop-container" id="shop"></div>
+<button onclick="buy()">Acheter item</button>
 
 <script>
-// 🔥 IMPORTANT : ton ID Discord
-let userId = prompt("Entre ton ID Discord :");
+const API = window.location.origin;
 
-// 🔥 TON SERVEUR RAILWAY (CHANGE ICI)
-const API = "https://TON-RAILWAY-URL.up.railway.app";
+const userId = prompt("Ton ID Discord");
 
-// coins display
-const coinsEl = document.getElementById('coins');
+async function buy() {
+    const res = await fetch(API + "/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userId: userId,
+            item: "Test Item",
+            price: 100
+        })
+    });
 
-// Items shop
-const items = [
-  { name: "Kit Épique", price: 100, content: "Ptera + Armure + Arme épique", img: "https://i.imgur.com/ZdKJx1A.png" },
-  { name: "Kit Farm", price: 100, content: "Argentavis + Ankylosaure + Doedicurus", img: "https://i.imgur.com/5lJZr5f.png" },
-  { name: "Kit Mythic VIP", price: 700, content: "+500 niveaux + équipement mythique", img: "https://i.imgur.com/yhXmW1L.png" },
-  { name: "Ressources", price: 600, content: "5k de chaque ressource", img: "https://i.imgur.com/nk7Up9f.png" }
-];
-
-// afficher shop
-const shopContainer = document.getElementById('shop');
-
-items.forEach(item => {
-  const div = document.createElement('div');
-  div.className = 'item';
-
-  div.innerHTML = `
-    <img src="${item.img}">
-    <h2>${item.name}</h2>
-    <p>💰 Prix : ${item.price} ambres</p>
-    <p>${item.content}</p>
-    <button onclick="buyItem('${item.name}', ${item.price})">Acheter</button>
-  `;
-
-  shopContainer.appendChild(div);
-});
-
-// 🔥 GET BALANCE
-async function updateBalance() {
-  const res = await fetch(`${API}/balance/${userId}`);
-  const data = await res.json();
-  coinsEl.innerText = data.coins;
+    const data = await res.json();
+    alert(JSON.stringify(data));
 }
-
-// 🔥 BUY ITEM
-async function buyItem(name, price) {
-  const res = await fetch(`${API}/buy`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      userId,
-      item: name,
-      price
-    })
-  });
-
-  const data = await res.json();
-
-  if (data.error) {
-    alert("❌ " + data.error);
-  } else {
-    alert("✅ Achat réussi : " + data.item);
-    coinsEl.innerText = data.newBalance;
-  }
-}
-
-// load
-updateBalance();
 </script>
-
-<footer>
-Shop officiel V-Umbrella
-</footer>
 
 </body>
 </html>
