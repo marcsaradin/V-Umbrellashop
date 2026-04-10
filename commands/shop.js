@@ -6,19 +6,8 @@ module.exports = {
     .setDescription('Ouvrir le shop'),
 
   async execute(interaction) {
-    try {
-      await interaction.reply({
-        content: "🛒 **V-Umbrella Shop**\nhttps://v-umbrellashop-production.up.railway.app"
-      });
-    } catch (error) {
-      console.error("Erreur /shop :", error);
-
-      if (!interaction.replied) {
-        await interaction.reply({
-          content: "❌ Erreur lors de l'ouverture du shop",
-          ephemeral: true
-        });
-      }
-    }
+    await interaction.reply({
+      content: "🛒 Shop : https://v-umbrellashop-production.up.railway.app"
+    });
   }
 };
