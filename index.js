@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const { Client, GatewayIntentBits } = require('discord.js');
 
@@ -9,7 +10,9 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// 💰 stockage simple
+// =====================
+// 💰 STOCKAGE SIMPLE
+// =====================
 let users = {};
 
 // =====================
@@ -19,12 +22,67 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
+// =====================
+// 📂 CHARGER COMMANDES
+// =====================
+client.commands = new Map();
+
+const commandsPath = path.join(__dirname, 'commands');
+
+if (fs.existsSync(commandsPath)) {
+    const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
+
+    for (const file of files) {
+        try {
+            const command = require(`./commands/${file}`);
+
+            if (!command.data || !command.data.name) {
+                console.log(`❌ Commande invalide: ${file}`);
+                continue;
+            }
+
+            client.commands.set(command.data.name, command);
+            console.log(`✅ Commande chargée: ${command.data.name}`);
+
+        } catch (err) {
+            console.log(`❌ Erreur fichier: ${file}`);
+            console.error(err);
+        }
+    }
+}
+
+// =====================
+// ⚡ BOT READY
+// =====================
 client.once('ready', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
 // =====================
-// 🌐 PAGE SHOP
+// 🎮 GESTION COMMANDES
+// =====================
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isChatInputCommand()) return;
+
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
+
+    try {
+        await command.execute(interaction);
+    } catch (err) {
+        console.error("Erreur commande:", err);
+
+        if (!interaction.replied) {
+            await interaction.reply({
+                content: "❌ Erreur commande",
+                ephemeral: true
+            });
+        }
+    }
+});
+
+// =====================
+// 🌐 SHOP PAGE
 // =====================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'shop.html'));
@@ -42,7 +100,7 @@ app.get('/balance/:id', (req, res) => {
 });
 
 // =====================
-// 🛒 BUY
+// 🛒 BUY + MESSAGE DISCORD
 // =====================
 app.post('/buy', async (req, res) => {
     const { userId, item, price } = req.body;
@@ -59,15 +117,17 @@ app.post('/buy', async (req, res) => {
 
     users[userId].coins -= price;
 
-    // 🔥 message Discord simple
+    // 🔥 MESSAGE DISCORD
     try {
         const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID);
 
         if (channel) {
-            channel.send(`🛒 Achat\n<@${userId}> a acheté ${item} pour ${price}`);
+            await channel.send(
+                `🛒 Achat\n👤 <@${userId}>\n📦 ${item}\n💰 ${price}`
+            );
         }
     } catch (err) {
-        console.log(err);
+        console.log("Erreur Discord:", err);
     }
 
     res.json({
@@ -77,9 +137,9 @@ app.post('/buy', async (req, res) => {
 });
 
 // =====================
-// 🚀 START
+// 🚀 START SERVEUR
 // =====================
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
