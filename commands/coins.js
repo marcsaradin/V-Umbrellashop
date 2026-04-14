@@ -1,7 +1,13 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
+const path = require('path');
 
-const FILE = './players.json';
+const FILE = path.join(__dirname, '../users.json');
+
+function loadDB() {
+    if (!fs.existsSync(FILE)) return {};
+    return JSON.parse(fs.readFileSync(FILE, 'utf8'));
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -11,15 +17,12 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        let players = {};
-        if (fs.existsSync(FILE)) {
-            players = JSON.parse(fs.readFileSync(FILE));
+        const users = loadDB();
+
+        if (!users[userId]) {
+            return interaction.reply("💰 Tu as 0 ambres");
         }
 
-        if (!players[userId]) {
-            players[userId] = { ambre: 0, inventory: [] };
-        }
-
-        await interaction.reply(`💰 Tu as ${players[userId].ambre} ambres`);
+        return interaction.reply(`💰 Tu as ${users[userId].coins} ambres`);
     }
 };
