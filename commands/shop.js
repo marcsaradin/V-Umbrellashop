@@ -7,7 +7,7 @@ module.exports = {
 
   async execute(interaction) {
     await interaction.reply({
-      content: "🛒 https://marcsaradin.github.io/V-Umbrellashop/"
+      content: "https://v-umbrellashop-production.up.railway.app/"
     });
   }
 };
