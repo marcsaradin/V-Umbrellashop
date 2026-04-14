@@ -9,14 +9,12 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// 🔥 sert les fichiers (index.html)
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 8080;
 
 // =====================
-// 💾 STOCKAGE
+// 💾 DB UNIQUE
 // =====================
 const FILE = './users.json';
 let users = {};
@@ -30,37 +28,26 @@ function saveUsers() {
 }
 
 // =====================
-// 🤖 BOT DISCORD
+// 🤖 BOT
 // =====================
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-// =====================
-// 📂 COMMANDES
-// =====================
 client.commands = new Map();
 
 const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'));
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
-
     if (!command.data || !command.data.name) continue;
-
     client.commands.set(command.data.name, command);
 }
 
-// =====================
-// READY
-// =====================
 client.once('clientReady', () => {
     console.log(`🤖 Connecté en tant que ${client.user.tag}`);
 });
 
-// =====================
-// COMMANDES
-// =====================
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -75,27 +62,34 @@ client.on('interactionCreate', async interaction => {
 });
 
 // =====================
-// API
+// 🌐 SHOP
 // =====================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-// 💰 balance
+// =====================
+// 💰 BALANCE
+// =====================
 app.get('/balance/:id', (req, res) => {
     const id = req.params.id;
 
     if (!users[id]) {
-        users[id] = { coins: 500, inventory: [] };
+        users[id] = { coins: 0, inventory: [] };
         saveUsers();
     }
 
     res.json({ coins: users[id].coins });
 });
 
-// 🛒 achat
+// =====================
+// 🛒 ACHAT
+// =====================
 app.post('/buy', async (req, res) => {
     const { userId, item, price } = req.body;
 
     if (!users[userId]) {
-        users[userId] = { coins: 500, inventory: [] };
+        users[userId] = { coins: 0, inventory: [] };
     }
 
     if (users[userId].coins < price) {
@@ -107,11 +101,10 @@ app.post('/buy', async (req, res) => {
 
     saveUsers();
 
-    // log discord
     try {
         const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID).catch(() => null);
         if (channel) {
-            channel.send(`🛒 <@${userId}> a acheté **${item}**`);
+            channel.send(`🛒 <@${userId}> a acheté **${item}** pour ${price} ambres`);
         }
     } catch {}
 
@@ -122,10 +115,10 @@ app.post('/buy', async (req, res) => {
 });
 
 // =====================
-// START
+// 🚀 START
 // =====================
 app.listen(PORT, '0.0.0.0', () => {
-    console.log("🌐 Serveur lancé");
+    console.log(`🌐 Serveur lancé sur ${PORT}`);
 });
 
 client.login(process.env.TOKEN);

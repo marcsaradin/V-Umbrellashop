@@ -18,34 +18,28 @@ module.exports = {
         .setName('addcoins')
         .setDescription('Donner des ambres à un membre')
         .addUserOption(option =>
-            option
-                .setName('user')
-                .setDescription('Utilisateur')
-                .setRequired(true)
+            option.setName('user').setDescription('Utilisateur').setRequired(true)
         )
         .addIntegerOption(option =>
-            option
-                .setName('amount')
-                .setDescription('Montant')
-                .setRequired(true)
+            option.setName('amount').setDescription('Montant').setRequired(true)
         ),
 
     async execute(interaction) {
 
-        const target = interaction.options.getUser('user');
-        const amount = interaction.options.getInteger('amount');
-
-        // 🔥 FIX CRASH
-        if (!target) {
+        // 🔒 ADMIN ONLY
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return interaction.reply({
-                content: "❌ Aucun utilisateur sélectionné",
+                content: "❌ Permission refusée",
                 ephemeral: true
             });
         }
 
-        if (!amount || amount <= 0) {
+        const target = interaction.options.getUser('user');
+        const amount = interaction.options.getInteger('amount');
+
+        if (!target || amount <= 0) {
             return interaction.reply({
-                content: "❌ Montant invalide",
+                content: "❌ Données invalides",
                 ephemeral: true
             });
         }
@@ -53,14 +47,12 @@ module.exports = {
         let users = loadDB();
 
         if (!users[target.id]) {
-            users[target.id] = { coins: 500 };
+            users[target.id] = { coins: 0, inventory: [] };
         }
 
         users[target.id].coins += amount;
 
         saveDB(users);
-
-        console.log(`💰 addcoins: ${target.id} +${amount}`);
 
         return interaction.reply(
             `✅ ${amount} ambres ajoutés à <@${target.id}>`
