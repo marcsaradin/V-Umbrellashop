@@ -14,17 +14,18 @@ app.use(express.static(__dirname));
 const PORT = process.env.PORT || 8080;
 
 // =====================
-// 💾 DB UNIQUE
+// 💾 DB
 // =====================
 const FILE = './users.json';
-let users = {};
 
-if (fs.existsSync(FILE)) {
-    users = JSON.parse(fs.readFileSync(FILE));
+// 🔥 charger à chaque fois (évite bug cache)
+function loadUsers() {
+    if (!fs.existsSync(FILE)) return {};
+    return JSON.parse(fs.readFileSync(FILE));
 }
 
-function saveUsers() {
-    fs.writeFileSync(FILE, JSON.stringify(users, null, 2));
+function saveUsers(data) {
+    fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
 }
 
 // =====================
@@ -72,20 +73,26 @@ app.get('/', (req, res) => {
 // 💰 BALANCE
 // =====================
 app.get('/balance/:id', (req, res) => {
+
+    const users = loadUsers(); // 🔥 recharge à chaque requête
     const id = req.params.id;
 
     if (!users[id]) {
         users[id] = { coins: 0, inventory: [] };
-        saveUsers();
+        saveUsers(users);
     }
+
+    console.log("BALANCE:", id, users[id]); // 🔥 DEBUG
 
     res.json({ coins: users[id].coins });
 });
 
 // =====================
-// 🛒 ACHAT
+// 🛒 BUY
 // =====================
 app.post('/buy', async (req, res) => {
+
+    const users = loadUsers(); // 🔥 recharge
     const { userId, item, price } = req.body;
 
     if (!users[userId]) {
@@ -99,12 +106,14 @@ app.post('/buy', async (req, res) => {
     users[userId].coins -= price;
     users[userId].inventory.push(item);
 
-    saveUsers();
+    saveUsers(users);
+
+    console.log("BUY:", userId, users[userId]); // 🔥 DEBUG
 
     try {
         const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID).catch(() => null);
         if (channel) {
-            channel.send(`🛒 <@${userId}> a acheté **${item}** pour ${price} ambres`);
+            channel.send(`🛒 <@${userId}> a acheté **${item}**`);
         }
     } catch {}
 
