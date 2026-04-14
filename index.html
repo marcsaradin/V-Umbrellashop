@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>V-Umbrella Shop</title>
+
+<style>
+body { font-family: Arial; background:#1e1f23; color:white; text-align:center; }
+.shop { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; }
+.card { background:#2c2f33; padding:15px; border-radius:10px; width:250px; }
+button { background:#7289da; border:none; padding:10px; color:white; cursor:pointer; }
+</style>
+</head>
+
+<body>
+
+<h1>🔥 V-Umbrella Shop 🔥</h1>
+
+<p>💰 Coins : <span id="coins">0</span></p>
+
+<div class="shop" id="shop"></div>
+
+<script>
+const API = "https://v-umbrellashop-production.up.railway.app";
+let userId = prompt("Entre ton ID Discord");
+
+const coinsEl = document.getElementById("coins");
+const shop = document.getElementById("shop");
+
+const items = [
+  { name:"Kit Épique", price:100 },
+  { name:"Kit Farm", price:100 },
+  { name:"Kit VIP", price:700 },
+  { name:"Ressources", price:600 }
+];
+
+items.forEach(i => {
+  const div = document.createElement("div");
+  div.className = "card";
+  div.innerHTML = `
+    <h3>${i.name}</h3>
+    <p>${i.price} coins</p>
+    <button onclick="buy('${i.name}', ${i.price})">Acheter</button>
+  `;
+  shop.appendChild(div);
+});
+
+async function load() {
+  const res = await fetch(`${API}/balance/${userId}`);
+  const data = await res.json();
+  coinsEl.innerText = data.coins;
+}
+
+async function buy(name, price) {
+  const res = await fetch(`${API}/buy`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ userId, item:name, price })
+  });
+
+  const data = await res.json();
+
+  if (data.error) return alert(data.error);
+
+  coinsEl.innerText = data.newBalance;
+  alert("Achat réussi");
+}
+
+load();
+</script>
+
+</body>
+</html>
