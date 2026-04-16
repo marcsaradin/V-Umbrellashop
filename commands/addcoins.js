@@ -1,24 +1,12 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
-const path = require('path');
 
-const FILE = path.join(__dirname, '../users.json');
-
-// 🔥 Charger les données
-function loadDB() {
-    if (!fs.existsSync(FILE)) return {};
-    return JSON.parse(fs.readFileSync(FILE, 'utf8'));
-}
-
-// 🔥 Sauvegarder
-function saveDB(data) {
-    fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
-}
+const FILE = './players.json';
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Ajouter des ambres à un joueur')
+        .setDescription('Ajouter des ambres')
         .addUserOption(option =>
             option.setName('user').setDescription('Utilisateur').setRequired(true)
         )
@@ -28,10 +16,9 @@ module.exports = {
 
     async execute(interaction) {
 
-        // 🔒 ADMIN ONLY
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return interaction.reply({
-                content: "❌ Tu n'as pas la permission",
+                content: "❌ Pas la permission",
                 ephemeral: true
             });
         }
@@ -39,32 +26,22 @@ module.exports = {
         const target = interaction.options.getUser('user');
         const amount = interaction.options.getInteger('amount');
 
-        if (!target || amount <= 0) {
-            return interaction.reply({
-                content: "❌ Données invalides",
-                ephemeral: true
-            });
+        let players = {};
+
+        if (fs.existsSync(FILE)) {
+            players = JSON.parse(fs.readFileSync(FILE));
         }
 
-        // 🔥 Charger DB
-        let users = loadDB();
-
-        // 🔥 Créer joueur si inexistant
-        if (!users[target.id]) {
-            users[target.id] = { coins: 0, inventory: [] };
+        if (!players[target.id]) {
+            players[target.id] = { ambre: 0, inventory: [] };
         }
 
-        // 🔥 Ajouter coins
-        users[target.id].coins += amount;
+        players[target.id].ambre += amount;
 
-        // 🔥 Sauvegarde
-        saveDB(users);
+        fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
 
-        // 🔥 DEBUG (important)
-        console.log("ADDCOINS:", target.id, users[target.id]);
+        console.log("ADD AMBRE:", target.id, players[target.id]);
 
-        return interaction.reply(
-            `✅ ${amount} ambres ajoutés à <@${target.id}>`
-        );
+        await interaction.reply(`✅ ${amount} ambres ajoutés à <@${target.id}>`);
     }
 };
