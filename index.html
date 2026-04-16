@@ -22,8 +22,12 @@ button { background:#7289da; border:none; padding:10px; color:white; cursor:poin
 
 <script>
 const API = "https://v-umbrellashop-production.up.railway.app";
-let userId = prompt("Entre ton ID Discord");
+let userId = localStorage.getItem("userId");
 
+if (!userId) {
+    userId = prompt("Entre ton ID Discord");
+    localStorage.setItem("userId", userId);
+}
 const coinsEl = document.getElementById("ambres");
 const shop = document.getElementById("shop");
 
