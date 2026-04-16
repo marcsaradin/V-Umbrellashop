@@ -16,7 +16,7 @@ button { background:#7289da; border:none; padding:10px; color:white; cursor:poin
 
 <h1>🔥 V-Umbrella Shop 🔥</h1>
 
-<p>💰 Coins : <span id="coins">0</span></p>
+<p>💰 Ambres : <span id="ambres">0</span></p>
 
 <div class="shop" id="shop"></div>
 
@@ -24,7 +24,7 @@ button { background:#7289da; border:none; padding:10px; color:white; cursor:poin
 const API = "https://v-umbrellashop-production.up.railway.app";
 let userId = prompt("Entre ton ID Discord");
 
-const coinsEl = document.getElementById("coins");
+const coinsEl = document.getElementById("ambres");
 const shop = document.getElementById("shop");
 
 const items = [
@@ -39,7 +39,7 @@ items.forEach(i => {
   div.className = "card";
   div.innerHTML = `
     <h3>${i.name}</h3>
-    <p>${i.price} coins</p>
+    <p>${i.price} ambres</p>
     <button onclick="buy('${i.name}', ${i.price})">Acheter</button>
   `;
   shop.appendChild(div);
@@ -48,7 +48,9 @@ items.forEach(i => {
 async function load() {
   const res = await fetch(`${API}/balance/${userId}`);
   const data = await res.json();
-  coinsEl.innerText = data.coins;
+
+  // 🔥 IMPORTANT
+  coinsEl.innerText = data.ambre;
 }
 
 async function buy(name, price) {
