@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 8080;
 // =====================
 // 💾 DB (AMBRES)
 // =====================
-const FILE = './users.json';
+const FILE = path.join(__dirname, 'users.json');
 
 function loadUsers() {
     if (!fs.existsSync(FILE)) return {};

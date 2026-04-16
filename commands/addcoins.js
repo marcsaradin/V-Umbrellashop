@@ -1,24 +1,42 @@
 const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('fs');
+const path = require('path');
 
-const FILE = './players.json';
+// 🔥 chemin propre (IMPORTANT)
+const FILE = path.join(__dirname, '../users.json');
+
+// 📂 charger DB
+function loadUsers() {
+    if (!fs.existsSync(FILE)) return {};
+    return JSON.parse(fs.readFileSync(FILE, 'utf8'));
+}
+
+// 💾 sauvegarder DB
+function saveUsers(data) {
+    fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Ajouter des ambres')
+        .setDescription('Donner des ambres à un joueur')
         .addUserOption(option =>
-            option.setName('user').setDescription('Utilisateur').setRequired(true)
+            option.setName('user')
+                .setDescription('Utilisateur')
+                .setRequired(true)
         )
         .addIntegerOption(option =>
-            option.setName('amount').setDescription('Montant').setRequired(true)
+            option.setName('amount')
+                .setDescription('Montant d’ambres')
+                .setRequired(true)
         ),
 
     async execute(interaction) {
 
+        // 🔒 permission admin
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return interaction.reply({
-                content: "❌ Pas la permission",
+                content: "❌ Tu n'as pas la permission",
                 ephemeral: true
             });
         }
@@ -26,22 +44,30 @@ module.exports = {
         const target = interaction.options.getUser('user');
         const amount = interaction.options.getInteger('amount');
 
-        let players = {};
-
-        if (fs.existsSync(FILE)) {
-            players = JSON.parse(fs.readFileSync(FILE));
+        // 🔥 sécurité
+        if (!target || amount <= 0) {
+            return interaction.reply({
+                content: "❌ Données invalides",
+                ephemeral: true
+            });
         }
 
-        if (!players[target.id]) {
-            players[target.id] = { ambre: 0, inventory: [] };
+        let users = loadUsers();
+
+        // 🔥 création user
+        if (!users[target.id]) {
+            users[target.id] = { ambre: 0, inventory: [] };
         }
 
-        players[target.id].ambre += amount;
+        // 💰 ajout ambres
+        users[target.id].ambre += amount;
 
-        fs.writeFileSync(FILE, JSON.stringify(players, null, 2));
+        saveUsers(users);
 
-        console.log("ADD AMBRE:", target.id, players[target.id]);
+        console.log(`💰 ADD AMBRE: ${target.id} -> ${users[target.id].ambre}`);
 
-        await interaction.reply(`✅ ${amount} ambres ajoutés à <@${target.id}>`);
+        return interaction.reply(
+            `✅ ${amount} ambres ajoutés à <@${target.id}>`
+        );
     }
 };
