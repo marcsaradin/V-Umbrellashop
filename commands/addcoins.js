@@ -4,11 +4,13 @@ const path = require('path');
 
 const FILE = path.join(__dirname, '../users.json');
 
+// 🔥 Charger les données
 function loadDB() {
     if (!fs.existsSync(FILE)) return {};
     return JSON.parse(fs.readFileSync(FILE, 'utf8'));
 }
 
+// 🔥 Sauvegarder
 function saveDB(data) {
     fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
 }
@@ -16,7 +18,7 @@ function saveDB(data) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcoins')
-        .setDescription('Donner des ambres à un membre')
+        .setDescription('Ajouter des ambres à un joueur')
         .addUserOption(option =>
             option.setName('user').setDescription('Utilisateur').setRequired(true)
         )
@@ -29,7 +31,7 @@ module.exports = {
         // 🔒 ADMIN ONLY
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
             return interaction.reply({
-                content: "❌ Permission refusée",
+                content: "❌ Tu n'as pas la permission",
                 ephemeral: true
             });
         }
@@ -44,15 +46,22 @@ module.exports = {
             });
         }
 
+        // 🔥 Charger DB
         let users = loadDB();
 
+        // 🔥 Créer joueur si inexistant
         if (!users[target.id]) {
             users[target.id] = { coins: 0, inventory: [] };
         }
 
+        // 🔥 Ajouter coins
         users[target.id].coins += amount;
 
+        // 🔥 Sauvegarde
         saveDB(users);
+
+        // 🔥 DEBUG (important)
+        console.log("ADDCOINS:", target.id, users[target.id]);
 
         return interaction.reply(
             `✅ ${amount} ambres ajoutés à <@${target.id}>`

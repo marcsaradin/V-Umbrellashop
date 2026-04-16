@@ -4,11 +4,6 @@ const path = require('path');
 
 const FILE = path.join(__dirname, '../users.json');
 
-function loadDB() {
-    if (!fs.existsSync(FILE)) return {};
-    return JSON.parse(fs.readFileSync(FILE, 'utf8'));
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('coins')
@@ -17,7 +12,13 @@ module.exports = {
     async execute(interaction) {
         const userId = interaction.user.id;
 
-        const users = loadDB();
+        // 🔥 recharge le fichier à chaque commande
+        let users = {};
+        if (fs.existsSync(FILE)) {
+            users = JSON.parse(fs.readFileSync(FILE, 'utf8'));
+        }
+
+        console.log("COINS CHECK:", userId, users[userId]); // DEBUG
 
         if (!users[userId]) {
             return interaction.reply("💰 Tu as 0 ambres");
