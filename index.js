@@ -14,11 +14,10 @@ app.use(express.static(__dirname));
 const PORT = process.env.PORT || 8080;
 
 // =====================
-// 💾 DB
+// 💾 DB (AMBRES)
 // =====================
 const FILE = './users.json';
 
-// 🔥 charger à chaque fois (évite bug cache)
 function loadUsers() {
     if (!fs.existsSync(FILE)) return {};
     return JSON.parse(fs.readFileSync(FILE));
@@ -29,7 +28,7 @@ function saveUsers(data) {
 }
 
 // =====================
-// 🤖 BOT
+// 🤖 BOT DISCORD
 // =====================
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
@@ -42,7 +41,9 @@ const commandFiles = fs.readdirSync('./commands').filter(f => f.endsWith('.js'))
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     if (!command.data || !command.data.name) continue;
+
     client.commands.set(command.data.name, command);
+    console.log(`✅ Commande chargée: ${command.data.name}`);
 }
 
 client.once('clientReady', () => {
@@ -59,6 +60,9 @@ client.on('interactionCreate', async interaction => {
         await command.execute(interaction);
     } catch (err) {
         console.error(err);
+        if (!interaction.replied) {
+            interaction.reply({ content: "❌ Erreur commande", ephemeral: true });
+        }
     }
 });
 
@@ -70,64 +74,70 @@ app.get('/', (req, res) => {
 });
 
 // =====================
-// 💰 BALANCE
+// 💰 BALANCE (AMBRES)
 // =====================
 app.get('/balance/:id', (req, res) => {
 
-    const users = loadUsers(); // 🔥 recharge à chaque requête
+    const users = loadUsers();
     const id = req.params.id;
 
     if (!users[id]) {
-        users[id] = { coins: 0, inventory: [] };
+        users[id] = { ambre: 0, inventory: [] };
         saveUsers(users);
     }
 
-    console.log("BALANCE:", id, users[id]); // 🔥 DEBUG
+    console.log("BALANCE:", id, users[id]);
 
-    res.json({ coins: users[id].coins });
+    res.json({ ambre: users[id].ambre });
 });
 
 // =====================
-// 🛒 BUY
+// 🛒 ACHAT
 // =====================
 app.post('/buy', async (req, res) => {
 
-    const users = loadUsers(); // 🔥 recharge
+    const users = loadUsers();
     const { userId, item, price } = req.body;
 
     if (!users[userId]) {
-        users[userId] = { coins: 0, inventory: [] };
+        users[userId] = { ambre: 0, inventory: [] };
     }
 
-    if (users[userId].coins < price) {
-        return res.json({ error: "Pas assez d'ambres" });
+    if (users[userId].ambre < price) {
+        return res.json({ error: "❌ Pas assez d'ambres" });
     }
 
-    users[userId].coins -= price;
+    users[userId].ambre -= price;
     users[userId].inventory.push(item);
 
     saveUsers(users);
 
-    console.log("BUY:", userId, users[userId]); // 🔥 DEBUG
+    console.log("BUY:", userId, users[userId]);
 
     try {
         const channel = await client.channels.fetch(process.env.SHOP_CHANNEL_ID).catch(() => null);
+
         if (channel) {
-            channel.send(`🛒 <@${userId}> a acheté **${item}**`);
+            channel.send(`🛒 <@${userId}> a acheté **${item}** pour ${price} ambres !`);
         }
-    } catch {}
+    } catch (e) {
+        console.log("Erreur Discord:", e);
+    }
 
     res.json({
-        item,
-        newBalance: users[userId].coins
+        item: item,
+        newBalance: users[userId].ambre
     });
 });
 
 // =====================
-// 🚀 START
+// 🚀 START SERVEUR
 // =====================
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Serveur lancé sur ${PORT}`);
+    console.log(`🌐 Serveur lancé sur le port ${PORT}`);
 });
 
+// =====================
+// 🔐 LOGIN BOT
+// =====================
 client.login(process.env.TOKEN);
