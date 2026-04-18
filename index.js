@@ -94,13 +94,13 @@ app.get('/balance/:id', (req, res) => {
     const id = req.params.id;
 
     if (!users[id]) {
-        users[id] = { coins: 0, inventory: [] };
+        users[id] = { anbre: 0, inventory: [] };
         saveUsers(users);
     }
 
     console.log("💰 BALANCE:", id, users[id].coins);
 
-    res.json({ coins: users[id].coins });
+    res.json({ ambre: users[id].ambre });
 });
 
 // =====================
@@ -116,14 +116,14 @@ app.post('/buy', async (req, res) => {
     }
 
     if (!users[userId]) {
-        users[userId] = { coins: 0, inventory: [] };
+        users[userId] = { ambre: 0, inventory: [] };
     }
 
-    if (users[userId].coins < price) {
+    if (users[userId].ambre < price) {
         return res.json({ error: "Pas assez d'ambres" });
     }
 
-    users[userId].coins -= price;
+    users[userId].ambre -= price;
     users[userId].inventory.push(item);
 
     saveUsers(users);
